@@ -706,14 +706,17 @@ def train(
         use_cpu=not use_gpu,
         optim=optim_name,
         logging_first_step=True,
-        logging_dir=os.path.join(output_dir, "logs"),
+        # logging_dir удалён в transformers 5.x
+        # Для TensorBoard используйте переменную окружения TENSORBOARD_LOGGING_DIR
         remove_unused_columns=False,  # Сохраняем все колонки
         ddp_find_unused_parameters=False if use_gpu else None,  # Оптимизация для multi-GPU
         gradient_checkpointing=use_gradient_checkpointing if use_gpu else False,  # Экономия памяти
+        gradient_checkpointing_kwargs={"use_reentrant": False},
     )
     
-    # Создаем директорию для логов
-    os.makedirs(os.path.join(output_dir, "logs"), exist_ok=True)
+    # Создаем директорию для логов (если используется TensorBoard)
+    log_dir = os.environ.get("TENSORBOARD_LOGGING_DIR", os.path.join(output_dir, "logs"))
+    os.makedirs(log_dir, exist_ok=True)
     
     # Trainer с callback для детального логирования
     trainer = Trainer(
@@ -823,4 +826,3 @@ if __name__ == "__main__":
         warmup_steps=args.warmup_steps,
         device=args.device,
     )
-
